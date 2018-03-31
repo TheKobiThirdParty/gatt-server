@@ -378,6 +378,28 @@ Server::Server(const std::string &serviceName, const std::string &advertisingNam
 		.gattCharacteristicEnd()
 	.gattServiceEnd()
 
+	// Moovel FareConnect account (0xCC01)
+	//
+	.gattServiceBegin("fareconnect", "cc01")
+
+		// Characteristic: Object ID (0x2AC3)
+		//
+                // What is the right characteristic?
+		.gattCharacteristicBegin("account", "2ac3", {"write"})
+
+			// Standard characteristic "WriteValue" method call
+			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+                                // 
+				GVariant *pAyBuffer = g_variant_get_child_value(pParameters, 0);
+				std::string account = Utils::stringFromGVariantByteArray(pAyBuffer);
+                                std::cout << account << "\n";
+			})
+
+		.gattCharacteristicEnd()
+	.gattServiceEnd()
+
+#if 0
 	// Custom read/write text string service (00000001-1E3C-FAD4-74E2-97A033F1BFAA)
 	//
 	// This service will return a text string value (default: 'Hello, world!'). If the text value is updated, it will notify
@@ -534,7 +556,9 @@ Server::Server(const std::string &serviceName, const std::string &advertisingNam
 			.gattDescriptorEnd()
 
 		.gattCharacteristicEnd()
-	.gattServiceEnd(); // << -- NOTE THE SEMICOLON
+	.gattServiceEnd()
+#endif
+        ; // << -- NOTE THE SEMICOLON
 
 	//  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 	//                                                ____ _____ ___  _____
