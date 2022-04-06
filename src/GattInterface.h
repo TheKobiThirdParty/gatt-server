@@ -149,12 +149,13 @@ struct GattInterface : DBusInterface
 	// This method is intended to be used in the server description. An example usage would be:
 	//
 	//     uint8_t batteryLevel = self.getDataValue<uint8_t>("battery/level", 0);
-	template<typename T>
-	T getDataValue(const char *pName, const T defaultValue) const
-	{
-		const void *pData = TheServer->getDataGetter()(pName);
-		return nullptr == pData ? defaultValue : *static_cast<const T *>(pData);
-	}
+	// template<typename T>
+	// T getDataValue(const char *pName, const T defaultValue) const
+	// {
+	// 	size_t size;
+	// 	const void *pData = TheServer->getDataGetter()(pName, size);
+	// 	return nullptr == pData ? defaultValue : *static_cast<const T *>(pData);
+	// }
 
 	// Return a data pointer from the server's registered data getter (GGKServerDataGetter)
 	//
@@ -164,10 +165,11 @@ struct GattInterface : DBusInterface
 	//
 	//     const char *pTextString = self.getDataPointer<const char *>("text/string", "");
 	template<typename T>
-	T getDataPointer(const char *pName, const T defaultValue) const
+	T getDataPointer(const char *pName, size_t& size) const
 	{
-		const void *pData = TheServer->getDataGetter()(pName);
-		return nullptr == pData ? defaultValue : static_cast<const T>(pData);
+		const void *pData = TheServer->getDataGetter()(pName, size);
+
+		return static_cast<const T>(pData);
 	}
 
 	// Sends a data value from the server back to the application through the server's registered data setter
@@ -179,9 +181,9 @@ struct GattInterface : DBusInterface
 	//
 	//     self.setDataValue("battery/level", batteryLevel);
 	template<typename T>
-	bool setDataValue(const char *pName, const T value) const
+	bool setDataValue(const char *pName, const T value, const size_t size) const
 	{
-		return TheServer->getDataSetter()(pName, static_cast<const void *>(&value)) != 0;
+		return TheServer->getDataSetter()(pName, static_cast<const void *>(&value), size) != 0;
 	}
 
 	// Sends a data pointer from the server back to the application through the server's registered data setter
@@ -193,9 +195,9 @@ struct GattInterface : DBusInterface
 	//
 	//     self.setDataPointer("text/string", stringFromGVariantByteArray(pAyBuffer).c_str());
 	template<typename T>
-	bool setDataPointer(const char *pName, const T pointer) const
+	bool setDataPointer(const char *pName, const T pointer, const size_t size) const
 	{
-		return TheServer->getDataSetter()(pName, static_cast<const void *>(pointer)) != 0;
+		return TheServer->getDataSetter()(pName, static_cast<const void *>(pointer), size) != 0;
 	}
 
 	// When responding to a ReadValue method, we need to return a GVariant value in the form "(ay)" (a tuple containing an array of

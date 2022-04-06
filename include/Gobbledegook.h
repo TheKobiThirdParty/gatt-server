@@ -100,7 +100,7 @@ extern "C"
 	//
 	// Similarly, the pointer to data returned to the server should point to non-volatile memory so that the server can use it
 	// safely for an indefinite period of time.
-	typedef const void *(*GGKServerDataGetter)(const char *pName);
+	typedef const void *(*GGKServerDataGetter)(const char *pName, size_t& size);
 
 	// Type definition for a delegate that the server will use when it needs to notify the host application that data has changed
 	//
@@ -119,7 +119,7 @@ extern "C"
 	//   * pData is null
 	//   * pName is not a supported value to store
 	//   * Any other failure, as deemed by the delegate handler
-	typedef int (*GGKServerDataSetter)(const char *pName, const void *pData);
+	typedef int (*GGKServerDataSetter)(const char *pName, const void *pData, const size_t size);
 
 	// -----------------------------------------------------------------------------------------------------------------------------
 	// SERVER DATA UPDATE MANAGEMENT
@@ -128,18 +128,18 @@ extern "C"
 	// Adds an update to the front of the queue for a characteristic at the given object path
 	//
 	// Returns non-zero value on success or 0 on failure.
-	int ggkNofifyUpdatedCharacteristic(const char *pObjectPath);
+	int ggkNofifyUpdatedCharacteristic(const char *pObjectPath, const std::string& updatedValue);
 
 	// Adds an update to the front of the queue for a descriptor at the given object path
 	//
 	// Returns non-zero value on success or 0 on failure.
-	int ggkNofifyUpdatedDescriptor(const char *pObjectPath);
+	int ggkNofifyUpdatedDescriptor(const char *pObjectPath, const std::string& updatedValue);
 
 	// Adds a named update to the front of the queue. Generally, this routine should not be used directly. Instead, use the
 	// `ggkNofifyUpdatedCharacteristic()` instead.
 	//
 	// Returns non-zero value on success or 0 on failure.
-	int ggkPushUpdateQueue(const char *pObjectPath, const char *pInterfaceName);
+	int ggkPushUpdateQueue(const char *pObjectPath, const char *pInterfaceName, const std::string& updatedValue);
 
 	// Get the next update from the back of the queue and returns the element in `element` as a string in the format:
 	//
@@ -154,7 +154,7 @@ extern "C"
 	// is removed.
 	//
 	// Returns 1 on success, 0 if the queue is empty, -1 on error (such as the length too small to store the element)
-	int ggkPopUpdateQueue(char *pElement, int elementLen, int keep);
+	int ggkPopUpdateQueue(char *pElement, int elementLen, std::string& updatedValue, int keep);
 
 	// Returns 1 if the queue is empty, otherwise 0
 	int ggkUpdateQueueIsEmpty();

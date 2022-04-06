@@ -166,7 +166,7 @@ GattDescriptor &GattDescriptor::onUpdatedValue(UpdatedValueCallback callback)
 //          // Call the onUpdateValue method that was set in the same Descriptor
 //          self.callOnUpdatedValue(pConnection, pUserData);
 //      })
-bool GattDescriptor::callOnUpdatedValue(GDBusConnection *pConnection, void *pUserData) const
+bool GattDescriptor::callOnUpdatedValue(GDBusConnection *pConnection, void *pUserData, const std::string& updatedValue) const
 {
 	if (nullptr == pOnUpdatedValueFunc)
 	{
@@ -174,7 +174,7 @@ bool GattDescriptor::callOnUpdatedValue(GDBusConnection *pConnection, void *pUse
 	}
 
 	Logger::debug(SSTR << "Calling OnUpdatedValue function for interface at path '" << getPath() << "'");
-	return pOnUpdatedValueFunc(*this, pConnection, pUserData);
+	return pOnUpdatedValueFunc(*this, pConnection, pUserData, updatedValue);
 }
 
 }; // namespace ggk

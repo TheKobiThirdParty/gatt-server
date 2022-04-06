@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>gatt_server_ros</name>
+  <version>0.0.1</version>
+  <description>
+    gatt_server_ros
+  </description>
+
+  <maintainer email="somebody@thekobi.com">Rene Hoelbling</maintainer>
+
+  <license>CLOSED</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>app_api</depend>
+  <depend>roscpp</depend>
+
+</package>

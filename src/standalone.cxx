@@ -107,7 +107,14 @@
 #include <thread>
 #include <sstream>
 
-#include "../include/Gobbledegook.h"
+#include <Gobbledegook.h>
+#include <ros/ros.h>
+
+#include <app_api/msgpack_ros.h>
+
+// ros stuff
+app_api::MsgpackRosModule msgpack_ros;
+
 
 //
 // Constants
@@ -119,12 +126,8 @@ static const int kMaxAsyncInitTimeoutMS = 30 * 1000;
 //
 // Server data values
 //
-
-// The battery level ("battery/level") reported by the server (see Server.cpp)
-static uint8_t serverDataBatteryLevel = 78;
-
-// The text string ("text/string") used by our custom text string service (see Server.cpp)
-static std::string serverDataTextString = "Hello, world!";
+// The text string ("write/command_string") used by our custom text string service (see Server.cpp)
+static std::string message;
 
 //
 // Logging
@@ -173,6 +176,14 @@ void signalHandler(int signum)
 	}
 }
 
+void writeCallback(const char* data, std::size_t size) {
+	std::string message;
+	message.resize(size);
+	memcpy(&message[0], data, size);
+	std::cout << "MESSAGE:" << message << "\n";
+	ggkNofifyUpdatedCharacteristic("/com/stringtest/alm_service/notify", message);
+}
+
 //
 // Server data management
 //
@@ -183,7 +194,7 @@ void signalHandler(int signum)
 //
 // The server calls this method from its own thread, so we must ensure our implementation is thread-safe. In our case, we're simply
 // sending over stored values, so we don't need to take any additional steps to ensure thread-safety.
-const void *dataGetter(const char *pName)
+const void *dataGetter(const char *pName, size_t& size)
 {
 	if (nullptr == pName)
 	{
@@ -192,14 +203,10 @@ const void *dataGetter(const char *pName)
 	}
 
 	std::string strName = pName;
-
-	if (strName == "battery/level")
+	if (strName == "write/command_string")
 	{
-		return &serverDataBatteryLevel;
-	}
-	else if (strName == "text/string")
-	{
-		return serverDataTextString.c_str();
+		size = message.size();
+		return message.data();
 	}
 
 	LogWarn((std::string("Unknown name for server data getter request: '") + pName + "'").c_str());
@@ -212,7 +219,7 @@ const void *dataGetter(const char *pName)
 //
 // The server calls this method from its own thread, so we must ensure our implementation is thread-safe. In our case, we're simply
 // sending over stored values, so we don't need to take any additional steps to ensure thread-safety.
-int dataSetter(const char *pName, const void *pData)
+int dataSetter(const char *pName, const void *pData, const size_t size)
 {
 	if (nullptr == pName)
 	{
@@ -226,17 +233,12 @@ int dataSetter(const char *pName, const void *pData)
 	}
 
 	std::string strName = pName;
+	LogAlways(std::string("Write event " + strName).c_str());
 
-	if (strName == "battery/level")
+	if (strName == "write/command_string")
 	{
-		serverDataBatteryLevel = *static_cast<const uint8_t *>(pData);
-		LogDebug((std::string("Server data: battery level set to ") + std::to_string(serverDataBatteryLevel)).c_str());
-		return 1;
-	}
-	else if (strName == "text/string")
-	{
-		serverDataTextString = static_cast<const char *>(pData);
-		LogDebug((std::string("Server data: text string set to '") + serverDataTextString + "'").c_str());
+		auto arr = static_cast<const char *>(pData);
+		msgpack_ros.onMessage(arr, size);
 		return 1;
 	}
 
@@ -249,36 +251,19 @@ int dataSetter(const char *pName, const void *pData)
 // Entry point
 //
 
-int main(int argc, char **ppArgv)
+int main(int argc, char **argv)
 {
-	// A basic command-line parser
-	for (int i = 1; i < argc; ++i)
-	{
-		std::string arg = ppArgv[i];
-		if (arg == "-q")
-		{
-			logLevel = ErrorsOnly;
-		}
-		else if (arg == "-v")
-		{
-			logLevel = Verbose;
-		}
-		else if  (arg == "-d")
-		{
-			logLevel = Debug;
-		}
-		else
-		{
-			LogFatal((std::string("Unknown parameter: '") + arg + "'").c_str());
-			LogFatal("");
-			LogFatal("Usage: standalone [-q | -v | -d]");
-			return -1;
-		}
-	}
-
+	// start ROS
+	ros::init(argc, argv, "bluetooth_node");
 	// Setup our signal handlers
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
+
+  ros::NodeHandle nh;
+  ros::NodeHandle pnh("~");
+
+	msgpack_ros.initialize(nh, pnh);
+	msgpack_ros.setWriteCallback(writeCallback);
 
 	// Register our loggers
 	ggkLogRegisterDebug(LogDebug);
@@ -299,21 +284,24 @@ int main(int argc, char **ppArgv)
 	//     This first parameter (the service name) must match tha name configured in the D-Bus permissions. See the Readme.md file
 	//     for more information.
 	//
-	if (!ggkStart("fareconnect", "FareConnect-1", "FareConnect-1", dataGetter, dataSetter, kMaxAsyncInitTimeoutMS))
+	const char* server_name = "stringtest";
+	if (!ggkStart(server_name, "", "", dataGetter, dataSetter, kMaxAsyncInitTimeoutMS))
 	{
 		return -1;
 	}
 
-	// Wait for the server to start the shutdown process
-	//
-	// While we wait, every 15 ticks, drop the battery level by one percent until we reach 0
-	while (ggkGetServerRunState() < EStopping)
-	{
-		std::this_thread::sleep_for(std::chrono::seconds(15));
+	while (ros::ok() && ggkGetServerRunState() < EStopping) {
+    ros::spinOnce();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
 
-		serverDataBatteryLevel = std::max(serverDataBatteryLevel - 1, 0);
-		ggkNofifyUpdatedCharacteristic("/com/gobbledegook/battery/level");
-	}
+	// while (ggkGetServerRunState() < EStopping)
+	// {
+	// 	std::this_thread::sleep_for(std::chrono::seconds(15));
+
+	// 	// ggkNofifyUpdatedCharacteristic("/com/gobbledegook/battery/level");
+	// }
+
 
 	// Wait for the server to come to a complete stop (CTRL-C from the command line)
 	if (!ggkWait())

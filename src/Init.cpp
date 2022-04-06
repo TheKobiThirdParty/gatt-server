@@ -150,7 +150,8 @@ bool idleFunc(void *pUserData)
 	// Try to get an update
 	const int kQueueEntryLen = 1024;
 	char queueEntry[kQueueEntryLen];
-	if (ggkPopUpdateQueue(queueEntry, kQueueEntryLen, 0) != 1)
+	std::string updatedValue;
+	if (ggkPopUpdateQueue(queueEntry, kQueueEntryLen, updatedValue, 0) != 1)
 	{
 		return false;
 	}
@@ -178,7 +179,7 @@ bool idleFunc(void *pUserData)
 		if (std::shared_ptr<const GattCharacteristic> pCharacteristic = TRY_GET_CONST_INTERFACE_OF_TYPE(pInterface, GattCharacteristic))
 		{
 			Logger::debug(SSTR << "Processing updated value for interface '" << interfaceName << "' at path '" << objectPath << "'");
-			pCharacteristic->callOnUpdatedValue(pBusConnection, pUserData);
+			pCharacteristic->callOnUpdatedValue(pBusConnection, pUserData, updatedValue);
 			return true;
 		}
 	}
