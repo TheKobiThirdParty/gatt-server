@@ -256,22 +256,86 @@ Server::Server(const std::string &serviceName, const std::string &advertisingNam
 	// We're going to build off of this object, so we need to get a reference to the instance of the object as it resides in the
 	// list (and not the object that would be added to the list.)
 	objects.back()
+	.gattServiceBegin("device_information", "180A")
 
-	// Custom read/write text string service (00000001-1E3C-FAD4-74E2-97A033F1BFAA)
-	//
-	// This service will return a text string value (default: 'Hello, world!'). If the text value is updated, it will notify
-	// that the value has been updated and provide the new text from that point forward.
-	.gattServiceBegin("alm_service", "00000000-4202-CD8d-EB11-058828E7629A")
-
-		// Characteristic: byte array value (custom: 00000002-1E3C-FAD4-74E2-97A033F1BFAA)
-		.gattCharacteristicBegin("write", "00000002-4202-CD8d-EB11-058828E7629A", {"write"})
+		// Characteristic: Firmware Revision String (custom: 2A26)
+		.gattCharacteristicBegin("firmware", "2A26", {"read"})
 
 			// Standard characteristic "ReadValue" method call
-			// .onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
-			// {
-			// 	const char *pTextString = self.getDataPointer<const char *>("text/string", "");
-			// 	self.methodReturnValue(pInvocation, pTextString, true);
-			// })
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				self.methodReturnValue(pInvocation, 0x00, true);
+			})
+
+		.gattCharacteristicEnd()
+
+		// Characteristic: Manufacturer Name String (custom: 2A29)
+		.gattCharacteristicBegin("manufacturer", "2A29", {"read"})
+
+			// Standard characteristic "ReadValue" method call
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				self.methodReturnValue(pInvocation, "BOSCH", true);
+			})
+
+		.gattCharacteristicEnd()
+
+		// Characteristic: Model Number String (custom: 2A24)
+		.gattCharacteristicBegin("model", "2A24", {"read"})
+
+			// Standard characteristic "ReadValue" method call
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				self.methodReturnValue(pInvocation, 0x00, true);
+			})
+
+		.gattCharacteristicEnd()
+
+		// Characteristic: Hardware Revision String (custom: 2A27)
+		.gattCharacteristicBegin("hardware_revision", "2A27", {"read"})
+
+			// Standard characteristic "ReadValue" method call
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				self.methodReturnValue(pInvocation, 0x00, true);
+			})
+
+		.gattCharacteristicEnd()
+
+		// Characteristic: PnP ID String (custom: 2A50)
+		.gattCharacteristicBegin("pnp_id", "2A50", {"read"})
+
+			// Standard characteristic "ReadValue" method call
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				unsigned char pnp[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+				int size = sizeof(pnp)/sizeof(pnp[0]);
+
+				GVariant *pVariant = Utils::gvariantFromByteArray(pnp, size);
+				self.methodReturnVariant(pInvocation, pVariant, true);
+			})
+
+		.gattCharacteristicEnd()
+
+		// Characteristic: Serial Number (custom: 2A25)
+		.gattCharacteristicBegin("serial_number", "2A25", {"read"})
+
+			// Standard characteristic "ReadValue" method call
+			.onReadValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
+			{
+				self.methodReturnValue(pInvocation, 0x00, true);
+			})
+
+		.gattCharacteristicEnd()
+
+	.gattServiceEnd()
+
+	// Custom read/write byte array service (00000000-4202-CD8D-EB11-058828E7629A)
+	//
+	.gattServiceBegin("alm", "00000000-4202-CD8D-EB11-058828E7629A")
+
+		// Characteristic: byte array value (custom: 00000002-4202-CD8D-EB11-058828E7629A)
+		.gattCharacteristicBegin("write", "00000002-4202-CD8D-EB11-058828E7629A", {"write"})
 
 			// Standard characteristic "WriteValue" method call
 			.onWriteValue(CHARACTERISTIC_METHOD_CALLBACK_LAMBDA
@@ -297,8 +361,8 @@ Server::Server(const std::string &serviceName, const std::string &advertisingNam
 			// })
 		.gattCharacteristicEnd()
 
-		// Characteristic: byte array value (custom: 00000003-4202-CD8d-EB11-058828E7629A)
-		.gattCharacteristicBegin("notify", "00000003-4202-CD8d-EB11-058828E7629A", {"notify"})
+		// Characteristic: byte array value (custom: 00000003-4202-CD8D-EB11-058828E7629A)
+		.gattCharacteristicBegin("notify", "00000003-4202-CD8D-EB11-058828E7629A", {"notify"})
 
 			// Here we use the onUpdatedValue to set a callback that isn't exposed to BlueZ, but rather allows us to manage
 			// updates to our value. These updates may have come from our own server or some other source.
@@ -312,7 +376,6 @@ Server::Server(const std::string &serviceName, const std::string &advertisingNam
 		.gattCharacteristicEnd()
 	.gattServiceEnd()
   ; // << -- NOTE THE SEMICOLON
-
 	//  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
 	//                                                ____ _____ ___  _____
 	//                                               / ___|_   _/ _ \|  _  |
