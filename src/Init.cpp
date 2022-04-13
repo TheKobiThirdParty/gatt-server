@@ -686,6 +686,9 @@ void configureAdapter()
 	std::string advertisingName = Mgmt::truncateName(TheServer->getAdvertisingName());
 	std::string advertisingShortName = Mgmt::truncateShortName(TheServer->getAdvertisingShortName());
 
+	// to use add advertising the advertising has to be deactivated --> avertising has always to be deactivated
+	if (!mgmt.setAdvertising(0)) { setRetry(); return; }
+
 	// Find out what our current settings are
 	HciAdapter::ControllerInformation info = HciAdapter::getInstance().getControllerInformation();
 
@@ -750,11 +753,7 @@ void configureAdapter()
 		if (!adFlag)
 		{
 			Logger::debug(SSTR << (TheServer->getEnableAdvertising() ? "Enabling":"Disabling") << " Advertising");
-			// to use add advertising the advertising has to be deactivated
-			if (!mgmt.setAdvertising(0)) { setRetry(); return; }
-			if (TheServer->getEnableAdvertising()) {
-				mgmt.addAdvertising();
-			}
+			if (!mgmt.addAdvertising()) { setRetry(); return; }
 		}
 
 		// Set the name?
