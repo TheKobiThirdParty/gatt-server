@@ -181,7 +181,7 @@ void writeCallback(const char* data, std::size_t size) {
 	message.resize(size);
 	memcpy(&message[0], data, size);
 	std::cout << "MESSAGE:" << message << "\n";
-	ggkNofifyUpdatedCharacteristic("/com/stringtest/alm_service/notify", message);
+	ggkNofifyUpdatedCharacteristic("/com/stringtest/alm/notify", message);
 }
 
 //
@@ -255,12 +255,12 @@ int main(int argc, char **argv)
 {
 	// start ROS
 	ros::init(argc, argv, "bluetooth_node");
+	ros::NodeHandle nh;
+	ros::NodeHandle pnh("~");
+
 	// Setup our signal handlers
 	signal(SIGINT, signalHandler);
 	signal(SIGTERM, signalHandler);
-
-  ros::NodeHandle nh;
-  ros::NodeHandle pnh("~");
 
 	msgpack_ros.initialize(nh, pnh);
 	msgpack_ros.setWriteCallback(writeCallback);

@@ -750,7 +750,11 @@ void configureAdapter()
 		if (!adFlag)
 		{
 			Logger::debug(SSTR << (TheServer->getEnableAdvertising() ? "Enabling":"Disabling") << " Advertising");
-			if (!mgmt.setAdvertising(TheServer->getEnableAdvertising() ? 1 : 0)) { setRetry(); return; }
+			// to use add advertising the advertising has to be deactivated
+			if (!mgmt.setAdvertising(0)) { setRetry(); return; }
+			if (TheServer->getEnableAdvertising()) {
+				mgmt.addAdvertising();
+			}
 		}
 
 		// Set the name?
