@@ -142,7 +142,7 @@ enum LogLevel
 };
 
 // Our log level - defaulted to 'Normal' but can be modified via command-line options
-LogLevel logLevel = Normal;
+LogLevel logLevel = Debug;
 
 // Our full set of logging methods (we just log to stdout)
 //

@@ -244,7 +244,7 @@ Server::Server(const std::string &serviceName, const std::string &advertisingNam
 	enableSecureConnection = false;
 	enableConnectable = true;
 	enableAdvertising = true;
-	enableBondable = false;
+	enableBondable = true;
 
 	//
 	// Define the server
@@ -347,6 +347,8 @@ Server::Server(const std::string &serviceName, const std::string &advertisingNam
 				std::vector<gchar> array(size + 1, 0);
 				memcpy(array.data(), pPtr, size);
 				self.setDataPointer("write/command_string", array.data(), size);
+
+				self.methodReturnVariant(pInvocation, NULL);
 			})
 
 			// Here we use the onUpdatedValue to set a callback that isn't exposed to BlueZ, but rather allows us to manage

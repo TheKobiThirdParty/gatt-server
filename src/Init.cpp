@@ -680,95 +680,95 @@ void registerObjects()
 // See also: https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/doc/mgmt-api.txt
 void configureAdapter()
 {
-	Mgmt mgmt;
+	// Mgmt mgmt;
 
-	// Get our properly truncated advertising names
-	std::string advertisingName = Mgmt::truncateName(TheServer->getAdvertisingName());
-	std::string advertisingShortName = Mgmt::truncateShortName(TheServer->getAdvertisingShortName());
+	// // Get our properly truncated advertising names
+	// std::string advertisingName = Mgmt::truncateName(TheServer->getAdvertisingName());
+	// std::string advertisingShortName = Mgmt::truncateShortName(TheServer->getAdvertisingShortName());
 
-	// to use add advertising the advertising has to be deactivated --> avertising has always to be deactivated
-	if (!mgmt.setAdvertising(0)) { setRetry(); return; }
+	// // to use add advertising the advertising has to be deactivated --> avertising has always to be deactivated
+	// if (!mgmt.setAdvertising(0)) { setRetry(); return; }
 
-	// Find out what our current settings are
-	HciAdapter::ControllerInformation info = HciAdapter::getInstance().getControllerInformation();
+	// // Find out what our current settings are
+	// HciAdapter::ControllerInformation info = HciAdapter::getInstance().getControllerInformation();
 
-	// Are all of our settings the way we want them?
-	bool pwFlag = info.currentSettings.isSet(HciAdapter::EHciPowered) == true;
-	bool leFlag = info.currentSettings.isSet(HciAdapter::EHciLowEnergy) == true;
-	bool brFlag = info.currentSettings.isSet(HciAdapter::EHciBasicRate_EnhancedDataRate) == TheServer->getEnableBREDR();
-	bool scFlag = info.currentSettings.isSet(HciAdapter::EHciSecureConnections) == TheServer->getEnableSecureConnection();
-	bool bnFlag = info.currentSettings.isSet(HciAdapter::EHciBondable) == TheServer->getEnableBondable();
-	bool cnFlag = info.currentSettings.isSet(HciAdapter::EHciConnectable) == TheServer->getEnableConnectable();
-	bool adFlag = info.currentSettings.isSet(HciAdapter::EHciAdvertising) == TheServer->getEnableAdvertising();
-	bool anFlag = (advertisingName.length() == 0 || advertisingName == info.name) && (advertisingShortName.length() == 0 || advertisingShortName == info.shortName);
+	// // Are all of our settings the way we want them?
+	// bool pwFlag = info.currentSettings.isSet(HciAdapter::EHciPowered) == true;
+	// bool leFlag = info.currentSettings.isSet(HciAdapter::EHciLowEnergy) == true;
+	// bool brFlag = info.currentSettings.isSet(HciAdapter::EHciBasicRate_EnhancedDataRate) == TheServer->getEnableBREDR();
+	// bool scFlag = info.currentSettings.isSet(HciAdapter::EHciSecureConnections) == TheServer->getEnableSecureConnection();
+	// bool bnFlag = info.currentSettings.isSet(HciAdapter::EHciBondable) == TheServer->getEnableBondable();
+	// bool cnFlag = info.currentSettings.isSet(HciAdapter::EHciConnectable) == TheServer->getEnableConnectable();
+	// bool adFlag = info.currentSettings.isSet(HciAdapter::EHciAdvertising) == TheServer->getEnableAdvertising();
+	// bool anFlag = (advertisingName.length() == 0 || advertisingName == info.name) && (advertisingShortName.length() == 0 || advertisingShortName == info.shortName);
 
-	// If everything is setup already, we're done
-	if (!pwFlag || !leFlag || !brFlag || !scFlag || !bnFlag || !cnFlag || !adFlag || !anFlag)
-	{
-		// We need it off to start with
-		if (pwFlag)
-		{
-			Logger::debug("Powering off");
-			if (!mgmt.setPowered(false)) { setRetry(); return; }
-		}
+	// // If everything is setup already, we're done
+	// if (!pwFlag || !leFlag || !brFlag || !scFlag || !bnFlag || !cnFlag || !adFlag || !anFlag)
+	// {
+	// 	// We need it off to start with
+	// 	if (pwFlag)
+	// 	{
+	// 		Logger::debug("Powering off");
+	// 		if (!mgmt.setPowered(false)) { setRetry(); return; }
+	// 	}
 
-		// Enable the LE state (we always set this state if it's not set)
-		if (!leFlag)
-		{
-			Logger::debug("Enabling LE");
-			if (!mgmt.setLE(true)) { setRetry(); return; }
-		}
+	// 	// Enable the LE state (we always set this state if it's not set)
+	// 	if (!leFlag)
+	// 	{
+	// 		Logger::debug("Enabling LE");
+	// 		if (!mgmt.setLE(true)) { setRetry(); return; }
+	// 	}
 
-		// Change the Br/Edr state?
-		//
-		// Note that enabling this requries LE to already be enabled or this command will receive a 'rejected' result
-		if (!brFlag)
-		{
-			Logger::debug(SSTR << (TheServer->getEnableBREDR() ? "Enabling":"Disabling") << " BR/EDR");
-			if (!mgmt.setBredr(TheServer->getEnableBREDR())) { setRetry(); return; }
-		}
+	// 	// Change the Br/Edr state?
+	// 	//
+	// 	// Note that enabling this requries LE to already be enabled or this command will receive a 'rejected' result
+	// 	if (!brFlag)
+	// 	{
+	// 		Logger::debug(SSTR << (TheServer->getEnableBREDR() ? "Enabling":"Disabling") << " BR/EDR");
+	// 		if (!mgmt.setBredr(TheServer->getEnableBREDR())) { setRetry(); return; }
+	// 	}
 
-		// Change the Secure Connectinos state?
-		if (!scFlag)
-		{
-			Logger::debug(SSTR << (TheServer->getEnableSecureConnection() ? "Enabling":"Disabling") << " Secure Connections");
-			if (!mgmt.setSecureConnections(TheServer->getEnableSecureConnection() ? 1 : 0)) { setRetry(); return; }
-		}
+	// 	// Change the Secure Connectinos state?
+	// 	if (!scFlag)
+	// 	{
+	// 		Logger::debug(SSTR << (TheServer->getEnableSecureConnection() ? "Enabling":"Disabling") << " Secure Connections");
+	// 		if (!mgmt.setSecureConnections(TheServer->getEnableSecureConnection() ? 1 : 0)) { setRetry(); return; }
+	// 	}
 
-		// Change the Bondable state?
-		if (!bnFlag)
-		{
-			Logger::debug(SSTR << (TheServer->getEnableBondable() ? "Enabling":"Disabling") << " Bondable");
-			if (!mgmt.setBondable(TheServer->getEnableBondable())) { setRetry(); return; }
-		}
+	// 	// Change the Bondable state?
+	// 	if (!bnFlag)
+	// 	{
+	// 		Logger::debug(SSTR << (TheServer->getEnableBondable() ? "Enabling":"Disabling") << " Bondable");
+	// 		if (!mgmt.setBondable(TheServer->getEnableBondable())) { setRetry(); return; }
+	// 	}
 
-		// Change the Connectable state?
-		if (!cnFlag)
-		{
-			Logger::debug(SSTR << (TheServer->getEnableConnectable() ? "Enabling":"Disabling") << " Connectable");
-			if (!mgmt.setConnectable(TheServer->getEnableConnectable())) { setRetry(); return; }
-		}
+	// 	// Change the Connectable state?
+	// 	if (!cnFlag)
+	// 	{
+	// 		Logger::debug(SSTR << (TheServer->getEnableConnectable() ? "Enabling":"Disabling") << " Connectable");
+	// 		//if (!mgmt.setConnectable(TheServer->getEnableConnectable())) { setRetry(); return; }
+	// 	}
 
-		// Change the Advertising state?
-		if (!adFlag)
-		{
-			Logger::debug(SSTR << (TheServer->getEnableAdvertising() ? "Enabling":"Disabling") << " Advertising");
-			if (!mgmt.addAdvertising()) { setRetry(); return; }
-		}
+	// 	// Change the Advertising state?
+	// 	if (!adFlag)
+	// 	{
+	// 		Logger::debug(SSTR << (TheServer->getEnableAdvertising() ? "Enabling":"Disabling") << " Advertising");
+	// 		if (!mgmt.addAdvertising()) { setRetry(); return; }
+	// 	}
 
-		// Set the name?
-		if (!anFlag)
-		{
-			Logger::info(SSTR << "Setting advertising name to '" << advertisingName << "' (with short name: '" << advertisingShortName << "')");
-			if (!mgmt.setName(advertisingName.c_str(), advertisingShortName.c_str())) { setRetry(); return; }
-		}
+	// 	// Set the name?
+	// 	// if (!anFlag)
+	// 	// {
+	// 	// 	Logger::info(SSTR << "Setting advertising name to '" << advertisingName << "' (with short name: '" << advertisingShortName << "')");
+	// 	// 	if (!mgmt.setName(advertisingName.c_str(), advertisingShortName.c_str())) { setRetry(); return; }
+	// 	// }
 
-		// Turn it back on
-		Logger::debug("Powering on");
-		if (!mgmt.setPowered(true)) { setRetry(); return; }
-	}
+	// 	// Turn it back on
+	// 	Logger::debug("Powering on");
+	// 	if (!mgmt.setPowered(true)) { setRetry(); return; }
+	// }
 
-	Logger::info("The Bluetooth adapter is fully configured");
+	// Logger::info("The Bluetooth adapter is fully configured");
 
 	// We're all set, nothing to do!
 	bAdapterConfigured = true;
@@ -1153,7 +1153,7 @@ void runServerThread()
 	// initialization process.
 	//
 	// In case you're wondering if these really need to be async, the answer is yes. For one, it's the right way to do it. But
-	// the more practical response is that the main loop must be running (see below) in order for us to receive and respond to
+	// the more practical  is that the main loop must be running (see below) in order for us to receive and respond to
 	// events from BlueZ. Well, one of the calls we need to make during initialization is 'RegisterApplication'. This method will
 	// will require that we respond the 'GetNamedObjects' method before it returns. If we were to call the synchronous version of
 	// 'RegisterApplication', then we've effectively created a deadlock.

@@ -5,6 +5,7 @@ find_package(catkin REQUIRED
   app_api roscpp
 )
 find_package(PkgConfig REQUIRED)
+find_package(msgpack REQUIRED)
 
 pkg_check_modules(GOBJECT REQUIRED gobject-2.0)
 include_directories(${GOBJECT_INCLUDE_DIRS})
@@ -47,6 +48,7 @@ add_executable(standalone
 
 target_link_libraries(standalone ${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  msgpackc-cxx
 )
 
 install(

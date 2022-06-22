@@ -201,7 +201,7 @@ bool Mgmt::addAdvertising()
 	request.instance = 0x01;
 	// Connectable && Discoverable, see Bluez/lib/mgmt.h
 	// setting flags results in 0x0D (Invalid Parameters)
-	request.flags = 0;
+	request.flags = 1u;
 	request.duration = 0;
 	request.timeout = 0;
 
