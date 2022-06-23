@@ -91,7 +91,7 @@ struct GattDescriptor : GattInterface
 
 	typedef void (*MethodCallback)(const GattDescriptor &self, GDBusConnection *pConnection, const std::string &methodName, GVariant *pParameters, GDBusMethodInvocation *pInvocation, void *pUserData);
 	typedef void (*EventCallback)(const GattDescriptor &self, const TickEvent &event, GDBusConnection *pConnection, void *pUserData);
-	typedef bool (*UpdatedValueCallback)(const GattDescriptor &self, GDBusConnection *pConnection, void *pUserData);
+	typedef bool (*UpdatedValueCallback)(const GattDescriptor &self, GDBusConnection *pConnection, void *pUserData, const std::string& updatedValue);
 
 	//
 	// Standard constructor
@@ -176,7 +176,7 @@ struct GattDescriptor : GattInterface
 	//          // Call the onUpdateValue method that was set in the same Descriptor
 	//          self.callOnUpdatedValue(pConnection, pUserData);
 	//      })
-	bool callOnUpdatedValue(GDBusConnection *pConnection, void *pUserData) const;
+	bool callOnUpdatedValue(GDBusConnection *pConnection, void *pUserData, const std::string& updatedValue) const;
 
 protected:
 

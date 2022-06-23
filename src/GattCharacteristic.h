@@ -63,7 +63,8 @@ struct DBusObject;
 ( \
 	const GattCharacteristic &self, \
 	GDBusConnection *pConnection, \
-	void *pUserData \
+	void *pUserData, \
+	const std::string& updatedValue \
 ) -> bool
 
 #define CHARACTERISTIC_EVENT_CALLBACK_LAMBDA [] \
@@ -95,7 +96,7 @@ struct GattCharacteristic : GattInterface
 
 	typedef void (*MethodCallback)(const GattCharacteristic &self, GDBusConnection *pConnection, const std::string &methodName, GVariant *pParameters, GDBusMethodInvocation *pInvocation, void *pUserData);
 	typedef void (*EventCallback)(const GattCharacteristic &self, const TickEvent &event, GDBusConnection *pConnection, void *pUserData);
-	typedef bool (*UpdatedValueCallback)(const GattCharacteristic &self, GDBusConnection *pConnection, void *pUserData);
+	typedef bool (*UpdatedValueCallback)(const GattCharacteristic &self, GDBusConnection *pConnection, void *pUserData, const std::string& updatedValue);
 
 	// Construct a GattCharacteristic
 	//
@@ -176,7 +177,7 @@ struct GattCharacteristic : GattInterface
 	//          // Call the onUpdateValue method that was set in the same Characteristic
 	//          self.callOnUpdatedValue(pConnection, pUserData);
 	//      })
-	bool callOnUpdatedValue(GDBusConnection *pConnection, void *pUserData) const;
+	bool callOnUpdatedValue(GDBusConnection *pConnection, void *pUserData, const std::string& updatedValue) const;
 
 	// Convenience functions to add a GATT descriptor to the hierarchy
 	//

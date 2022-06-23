@@ -75,7 +75,8 @@ namespace ggk
 	static GLogFunc logHandlerGLib;
 
 	// Our update queue
-	typedef std::tuple<std::string, std::string> QueueEntry;
+	typedef std::tuple<std::string, std::string, std::string> QueueEntry;
+
 	std::deque<QueueEntry> updateQueue;
 	std::mutex updateQueueMutex;
 
@@ -130,26 +131,26 @@ void ggkLogRegisterAlways(GGKLogReceiver receiver) { Logger::registerAlwaysRecei
 // Adds an update to the front of the queue for a characteristic at the given object path
 //
 // Returns non-zero value on success or 0 on failure.
-int ggkNofifyUpdatedCharacteristic(const char *pObjectPath)
+int ggkNofifyUpdatedCharacteristic(const char *pObjectPath, const std::string& updatedValue)
 {
-	return ggkPushUpdateQueue(pObjectPath, "org.bluez.GattCharacteristic1") != 0;
+	return ggkPushUpdateQueue(pObjectPath, "org.bluez.GattCharacteristic1", updatedValue) != 0;
 }
 
 // Adds an update to the front of the queue for a descriptor at the given object path
 //
 // Returns non-zero value on success or 0 on failure.
-int ggkNofifyUpdatedDescriptor(const char *pObjectPath)
+int ggkNofifyUpdatedDescriptor(const char *pObjectPath, const std::string& updatedValue)
 {
-	return ggkPushUpdateQueue(pObjectPath, "org.bluez.GattDescriptor1") != 0;
+	return ggkPushUpdateQueue(pObjectPath, "org.bluez.GattDescriptor1", updatedValue) != 0;
 }
 
 // Adds a named update to the front of the queue. Generally, this routine should not be used directly. Instead, use the
 // `ggkNofifyUpdatedCharacteristic()` instead.
 //
 // Returns non-zero value on success or 0 on failure.
-int ggkPushUpdateQueue(const char *pObjectPath, const char *pInterfaceName)
+int ggkPushUpdateQueue(const char *pObjectPath, const char *pInterfaceName, const std::string& updatedValue)
 {
-	QueueEntry t(pObjectPath, pInterfaceName);
+	QueueEntry t(pObjectPath, pInterfaceName, updatedValue);
 
 	std::lock_guard<std::mutex> guard(updateQueueMutex);
 	updateQueue.push_front(t);
@@ -169,7 +170,7 @@ int ggkPushUpdateQueue(const char *pObjectPath, const char *pInterfaceName)
 // is removed.
 //
 // Returns 1 on success, 0 if the queue is empty, -1 on error (such as the length too small to store the element)
-int ggkPopUpdateQueue(char *pElementBuffer, int elementLen, int keep)
+int ggkPopUpdateQueue(char *pElementBuffer, int elementLen, std::string& message, int keep)
 {
 	std::string result;
 
@@ -184,6 +185,7 @@ int ggkPopUpdateQueue(char *pElementBuffer, int elementLen, int keep)
 
 		// Get the result string
 		result = std::get<0>(t) + "|" + std::get<1>(t);
+		message = std::get<2>(t);
 
 		// Ensure there's enough room for it
 		if (result.length() + 1 > static_cast<size_t>(elementLen)) { return -1; }

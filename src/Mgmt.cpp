@@ -174,6 +174,94 @@ bool Mgmt::setAdvertising(uint8_t newState)
 	return setState(Mgmt::ESetAdvertisingCommand, controllerIndex, newState);
 }
 
+// Start advertising with custom data
+// Advertisement packet will contain: flags, shortName, uuid
+bool Mgmt::addAdvertising()
+{
+	constexpr size_t ADVERTISING_MAX_DATALEN = 31;
+	constexpr size_t SCAN_RSP_MAX_DATALEN = 17;
+
+	struct SRequest : HciAdapter::HciHeader
+	{
+		uint8_t  instance;
+		uint32_t flags;
+		uint16_t duration;
+		uint16_t timeout;
+		uint8_t  advDataLen;
+		uint8_t  scanRspLen;
+		uint8_t  data[ADVERTISING_MAX_DATALEN];
+		uint8_t  scanRspData[SCAN_RSP_MAX_DATALEN];
+	} __attribute__((packed));
+
+	SRequest request{};
+	request.code = Mgmt::EAddAdvertisingCommand;
+	request.controllerId = controllerIndex;
+	request.dataSize = sizeof(SRequest) - sizeof(HciAdapter::HciHeader);
+
+	request.instance = 0x01;
+	// Connectable && Discoverable, see Bluez/lib/mgmt.h
+	// setting flags results in 0x0D (Invalid Parameters)
+	request.flags = 1u;
+	request.duration = 0;
+	request.timeout = 0;
+
+	request.advDataLen = ADVERTISING_MAX_DATALEN;
+	request.scanRspLen = SCAN_RSP_MAX_DATALEN;
+
+	// AD Data 1 <<Flags>>
+	// length
+	request.data[0] = 0x02;
+	// type --> flags
+	request.data[1] = 0x01;
+	// BR/EDR not supported | General discoverable mode
+	request.data[2] = 0x06;
+
+	// AD Data 2 <<Manufacturer Specific Data>>
+	// length
+	request.data[3] = 0x1B;
+	// type --> Manufacturer Specific data
+	request.data[4] = 0xFF;
+	// Company : Robert Bosch GmbH
+	request.data[5] = 0xA6;
+	request.data[6] = 0x02;
+	// Model
+	request.data[7] = 0x00;
+	// PCBA_Version
+	request.data[8] = 0x00;
+	// Error_Code_Status
+	request.data[9] = 0x00;
+	// Battery
+	request.data[10] = 100u;
+	// Serial number
+	request.data[11] = 0xB0;
+	request.data[12] = 0xD0;
+	request.data[13] = 0x56;
+	request.data[14] = 0xF2;
+	request.data[15] = 0xB5;
+	request.data[16] = 0x12;
+	request.data[17] = 0x00;
+	request.data[18] = 0x00;
+	request.data[19] = 0x00;
+	request.data[20] = 0x00;
+	// Reserved 21-31
+
+	// length
+	request.scanRspData[0] = 0x10;
+	// Complete local name
+	request.scanRspData[1] = 0x09;
+	// SKYWALKER-XXXXX
+	std::string local_name = "SKYWALKER-XXXXX";
+	memcpy(&request.scanRspData[2], local_name.c_str(), SCAN_RSP_MAX_DATALEN-2);
+
+	if (!HciAdapter::getInstance().sendCommand(request))
+	{
+		Logger::warn(SSTR << "  + Failed to start advertising with UUID");
+		return false;
+	}
+
+	return true;
+}
+
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Utilitarian
 // ---------------------------------------------------------------------------------------------------------------------------------
